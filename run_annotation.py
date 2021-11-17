@@ -1,21 +1,30 @@
 import os,time
-import numpy as np
 import rasterio #for reading images
+import napari
+import multiprocessing as mlt
+import numpy as np
 import matplotlib.pyplot as plt 
 import pandas as pd
-import napari
+
 from matplotlib import path
 
 directory = os.path.join(os.getcwd(), "ee_data")
 
+def run_napari(img):
+    viewer = napari.view_image(img)
+    napari.run()
+    return viewer
+
 def get_mask(fileName):
     with rasterio.open('ee_data//Engilchek_2001-10-02.tif') as src:
         img = src.read() 
-    viewer = napari.view_image(img)
-    napari.run()
-    # input("Press ENTER after annotation")
+    napariConcurrent = mlt.Process(target=run_napari, args=img)
+    viewer = napariConcurrent.get()
+    input("Press ENTER after annotation")
     while True:
+        
         try:
+
             path_dimention = get_polygon_path(viewer)
             mask = containsWithin(path_dimention, img)
         except KeyError:
