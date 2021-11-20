@@ -68,18 +68,17 @@ def testPixelMask(img,paths,viewer):
     return ice_coordinates,non_ice_coordinates
 
 def createLog(directory):
-    with open(os.path.join(directory, "imagelog.data"), "wb+") as image_log:
-        try:
-            imageList = pickle.load(image_log)
-        except (EOFError) as e:
-            imageList = []
-            pickle.dump(imageList, file=image_log)
-        return imageList
+    logpath = os.path.join(directory, "imgAnnotatedData.pickle")
+    try:
+        imageList = pickle.load(open(logpath,"rb"))
+    except (OSError, IOError) as e:
+        imageList = []
+        pickle.dump(imageList, open(logpath,"wb"))
+    return imageList
 
-
-def updateLog(imageList,log_path):
-    with open(os.path.join(log_path), "wb+") as image_log:
-        pickle.dump(imageList, file=image_log)
+def updateLog(imageList,directory):
+    logpath = os.path.join(directory, "imgAnnotatedData.pickle")
+    pickle.dump(imageList, open(logpath,"wb"))
 
 
 def test():
@@ -112,6 +111,7 @@ def main():
 
     for root, dirs, files in os.walk(directory):            
         for image_file in files:
+
             image_path = os.path.join(directory, image_file)
             print(image_path)
             if os.path.splitext(image_path)[1] == ".tif" and image_file not in annotated_list:
@@ -120,13 +120,15 @@ def main():
                         response = input("Press Enter after Labeling or input \"SKIP\" in order to skip image:\n")
                         if response == "SKIP":
                             viewer.close()
+                            annotated_list.append(image_file)
+                            updateLog(annotated_list, directory)
                             break
                         try:    
                             paths = getPolygonMasks(viewer)
                             test_mask = getPixelMask(img,paths)
                             testPixelMask(img, paths, viewer)
                             annotated_list.append(image_file)
-                            updateLog(annotated_list, image_path)
+                            updateLog(annotated_list, directory)
                             break
                         except Exception as e:
                             print(f"{e} \nLabel the image")
