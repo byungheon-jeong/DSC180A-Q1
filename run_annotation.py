@@ -55,6 +55,17 @@ def getPixelMask(img,paths):
     return np.array(iceData), np.array(nonIceData)
 
 
+def getTrainingData(iceData, nonIceData):
+    data,labels = np.array([]), np.array([])
+
+    iceLabels = np.array(["Ice"]*iceData.shape[0])
+    nonIceLabels = np.array(["Not Ice"]*nonIceData.shape[0])
+    data = np.vstack((iceData, nonIceData))
+    labels = np.hstack((iceLabels, nonIceLabels))
+
+    return data, labels
+
+
 def testPixelMask(img,paths,viewer):
     iceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["ice"]]))
     nonIceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["non_ice"]]))
@@ -67,19 +78,46 @@ def testPixelMask(img,paths,viewer):
     
     return ice_coordinates,non_ice_coordinates
 
-def createLog(directory):
+
+def loadCheckpoint(directory):
     logpath = os.path.join(directory, "imgAnnotatedData.pickle")
     try:
         imageList = pickle.load(open(logpath,"rb"))
     except (OSError, IOError) as e:
         imageList = []
         pickle.dump(imageList, open(logpath,"wb"))
-    return imageList
+
+    data, labels = np.empty([0,3]),np.empty([0])
+    if os.path.exists(os.path.join(directory,"data.npy")) and os.path.exists(os.path.join(directory,"labels.npy")):
+        with open(os.path.join(directory, "data.npy")) as f:
+            data= np.load(f)
+        with open(os.path.join(directory, "labels.npy")) as f:
+            labels=np.load(f)
+
+    return imageList, data, labels
+
 
 def updateLog(imageList,directory):
     logpath = os.path.join(directory, "imgAnnotatedData.pickle")
     pickle.dump(imageList, open(logpath,"wb"))
 
+
+def runTestsAndLog(img, paths, viewer, annotated_list,image_file,directory):
+    testPixelMask(img, paths, viewer)
+
+    annotated_list.append(image_file)
+    updateLog(annotated_list, directory)
+    input("Input ENTER after checking RB pixels")
+
+
+def updateArraysAndSave(data,image_data,labels,image_labels,directory):
+    data = np.vstack((data,image_data))
+    labels = np.hstack((labels, image_labels))
+
+    with open(os.path.join(directory, "data.npy"),"wb") as f:
+        np.save(f, data)
+    with open(os.path.join(directory, "label.npy"), "wb") as f:
+        np.save(f, labels)
 
 def test():
     try:
@@ -107,32 +145,42 @@ def test():
 def main():
     # directory = input("Enter Directory:\n")
     directory = r"C:\Users\marke\Documents\DSC180A-Q1\ee_data"
-    annotated_list = createLog(directory)
+    annotated_list, data, labels = loadCheckpoint(directory)
 
     for root, dirs, files in os.walk(directory):            
         for image_file in files:
-
             image_path = os.path.join(directory, image_file)
             print(image_path)
             if os.path.splitext(image_path)[1] == ".tif" and image_file not in annotated_list:
-                    viewer,img = runNapari(image_path)
-                    while True:
-                        response = input("Press Enter after Labeling or input \"SKIP\" in order to skip image:\n")
-                        if response == "SKIP":
-                            viewer.close()
-                            annotated_list.append(image_file)
-                            updateLog(annotated_list, directory)
-                            break
-                        try:    
-                            paths = getPolygonMasks(viewer)
-                            test_mask = getPixelMask(img,paths)
-                            testPixelMask(img, paths, viewer)
-                            annotated_list.append(image_file)
-                            updateLog(annotated_list, directory)
-                            break
-                        except Exception as e:
-                            print(f"{e} \nLabel the image")
-                    
+                viewer,img = runNapari(image_path)
+                while True:
+                    response = input("Press Enter after Labeling or input \"SKIP\" in order to skip image:\n")
+                    if response == "SKIP":
+                        viewer.close()
+                        annotated_list.append(image_file)
+                        updateLog(annotated_list, directory)
+                        break
+                    try:    
+                        paths = getPolygonMasks(viewer)
+                        ice,not_ice = getPixelMask(img,paths)
+                        image_data,image_labels = getTrainingData(ice,not_ice)
+                        
+                        # data = np.vstack((data,image_data))
+                        # labels = np.hstack((labels, image_labels))
+                        
+                        updateArraysAndSave(data,image_data,labels,image_labels,directory)
+                        runTestsAndLog(img, paths, viewer, annotated_list,image_file,directory)
+                        # testPixelMask(img, paths, viewer)  
+                        # annotated_list.append(image_file)
+                        # updateLog(annotated_list, directory)
+                        # input("Input ENTER after checking RB pixels")
+
+                        viewer.close()
+                        break
+                    except Exception as e:
+                        print(f"{e} \nLabel the image")
+        dftest = pd.DataFrame(data)
+        dftest = dftest.assign(pd.Series(labels))
                 # return test_mask
 
     
