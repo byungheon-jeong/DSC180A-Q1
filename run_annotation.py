@@ -80,7 +80,7 @@ def testPixelMask(img,paths,viewer):
 
 
 def loadCheckpoint(directory):
-    logpath = os.path.join(directory, "imgAnnotatedData.pickle")
+    logpath = os.path.join(directory,"data", "imgAnnotatedData.pickle")
     try:
         imageList = pickle.load(open(logpath,"rb"))
     except (OSError, IOError) as e:
@@ -98,7 +98,7 @@ def loadCheckpoint(directory):
 
 
 def updateLog(imageList,directory):
-    logpath = os.path.join(directory, "imgAnnotatedData.pickle")
+    logpath = os.path.join(directory, "data","imgAnnotatedData.pickle")
     pickle.dump(imageList, open(logpath,"wb"))
 
 
@@ -114,9 +114,9 @@ def updateArraysAndSave(data,image_data,labels,image_labels,directory):
     data = np.vstack((data,image_data))
     labels = np.hstack((labels, image_labels))
 
-    with open(os.path.join(directory, "data.npy"),"wb") as f:
+    with open(os.path.join(directory, "data", "data.npy"),"wb") as f:
         np.save(f, data)
-    with open(os.path.join(directory, "label.npy"), "wb") as f:
+    with open(os.path.join(directory, "data", "label.npy"), "wb") as f:
         np.save(f, labels)
 
 def test():
@@ -143,8 +143,8 @@ def test():
 
 
 def main():
-    # directory = input("Enter Directory:\n")
-    directory = r"C:\Users\marke\Documents\DSC180A-Q1\ee_data"
+    directory = input("Enter Directory:\n")
+    # directory = r"C:\Users\marke\Documents\DSC180A-Q1\ee_data"
     annotated_list, data, labels = loadCheckpoint(directory)
 
     for root, dirs, files in os.walk(directory):            
@@ -165,16 +165,9 @@ def main():
                         ice,not_ice = getPixelMask(img,paths)
                         image_data,image_labels = getTrainingData(ice,not_ice)
                         
-                        # data = np.vstack((data,image_data))
-                        # labels = np.hstack((labels, image_labels))
-                        
                         updateArraysAndSave(data,image_data,labels,image_labels,directory)
                         runTestsAndLog(img, paths, viewer, annotated_list,image_file,directory)
-                        # testPixelMask(img, paths, viewer)  
-                        # annotated_list.append(image_file)
-                        # updateLog(annotated_list, directory)
-                        # input("Input ENTER after checking RB pixels")
-
+                        
                         viewer.close()
                         break
                     except Exception as e:
