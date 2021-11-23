@@ -103,16 +103,16 @@ bad_dates = ['1999-12-16',
 
 from datetime import date
 
-list_set = []
-for i in range(len(bad_dates)):   
-    datetime_object = date.fromisoformat(bad_dates[i])
-    start = datetime_object + timedelta(days=1)
-    end = datetime_object - timedelta(days=1)
+# list_set = []
+# for i in range(len(bad_dates)):   
+#     datetime_object = date.fromisoformat(bad_dates[i])
+#     start = datetime_object + timedelta(days=1)
+#     end = datetime_object - timedelta(days=1)
     
-    list_set.append((str(start), str(end)))
+#     list_set.append((str(start), str(end)))
 
-for i in range(len(list_set)):
-    collection = collection.filterfrom datetime import date(ee.Filter.date(list_set[i][0], list_set[i][1]).Not()
+# for i in range(len(list_set)):
+#     collection = collection.filterfrom datetime import dat(ee.Filter.date(list_set[i][0], list_set[i][1]).Not()
 
 collection = collection.select(bands)
 collection_list = collection.toList(collection.size())
@@ -125,6 +125,9 @@ dates = geemap.image_dates(collection, date_format='YYYY-MM-dd').getInfo()
 s_imgs = [] #to delete after
 for i, date in enumerate(dates[:111]):
 
+    if date in bad_dates:
+        continue
+        
     image = ee.Image(collection_list.get(i))
 
 
