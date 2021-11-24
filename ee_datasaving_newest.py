@@ -134,6 +134,6 @@ for i, date in enumerate(dates[:111]):
     NDSI_image = (image.select('B2').subtract(image.select('B5'))
          .divide(image.select('B5').add(image.select('B5'))))
 
-    geemap.ee_export_image(NDSI_image, filename = "raw_data/ndsi_imgs/Engilchek_glacier_{}.tif".format(date), scale = 100, region = region, file_per_band = False)
+    geemap.ee_export_image(NDSI_image, filename = "./Engilchek_glacier_{}.tif".format(date), scale = 100, region = region, file_per_band = False)
     #get dates here to filter
     s_imgs.append(NDSI_image)
