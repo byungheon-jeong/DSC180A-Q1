@@ -189,8 +189,8 @@ def main():
                         break
                     except Exception as e:
                         print(f"{e} \nLabel the image")
-        dftest = pd.DataFrame(data)
-        dftest = dftest.assign(pd.Series(labels))
+
+
                 # return test_mask
 
     
