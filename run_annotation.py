@@ -11,12 +11,15 @@ from matplotlib import path
 
 directory = os.path.join(os.getcwd(), "ee_data")
 
-def runNapari(img_path):
+def runNapari(img_path, full_img_path):
     with rasterio.open(img_path) as src:
         img = src.read()
-   
+    
+    with rasterio.open(full_img_path) as src:
+        img_full = src.read()
+
     viewer = napari.view_image(img)
-    return viewer, img
+    return viewer, img, img_full
 
 
 def getPolygonMasks(viewer)-> list:
@@ -79,34 +82,41 @@ def testPixelMask(img,paths,viewer):
     return ice_coordinates,non_ice_coordinates
 
 
-def loadCheckpoint(directory):
-    logpath = os.path.join(directory,"data", "imgAnnotatedData.pickle")
+def loadCheckpoint(directory,num_bands):
+    logpath = os.path.join(directory,"checkpoints", "imgAnnotatedData.npy")
     try:
-        imageList = pickle.load(open(logpath,"rb"))
-    except (OSError, IOError) as e:
-        imageList = []
-        pickle.dump(imageList, open(logpath,"wb"))
+        with open(logpath, "rb") as f:
+            imageList = np.load(f)
 
-    data, labels = np.empty([0,3]),np.empty([0])
-    if os.path.exists(os.path.join(directory,"data.npy")) and os.path.exists(os.path.join(directory,"labels.npy")):
-        with open(os.path.join(directory, "data.npy")) as f:
+    except (OSError, IOError) as e:
+        imageList = np.array([])
+        try :
+            os.mkdir(os.path.join(directory,"checkpoints"))
+        except:
+            print("Data dir is present")
+
+
+    data, labels = np.empty([0,num_bands]),np.empty([0])
+    
+    if os.path.exists(os.path.join(directory, "checkpoints","data.npy")) and os.path.exists(os.path.join(directory, "checkpoints","labels.npy")):
+        with open(os.path.join(directory, "checkpoints", "data.npy"),'rb') as f:
             data= np.load(f)
-        with open(os.path.join(directory, "labels.npy")) as f:
-            labels=np.load(f)
+            with open(os.path.join(directory, "checkpoints", "labels.npy"),'rb') as f:
+                labels=np.load(f)
 
     return imageList, data, labels
 
 
 def updateLog(imageList,directory):
-    logpath = os.path.join(directory, "data","imgAnnotatedData.pickle")
-    pickle.dump(imageList, open(logpath,"wb"))
+    logpath = os.path.join(directory, "imgAnnotatedData.npy")
+    with open(logpath, "wb") as f:
+        np.save(f, imageList)
 
 
-def runTestsAndLog(img, paths, viewer, annotated_list,image_file,directory):
+def runTestsAndLog(img, paths, viewer, annotated_list,image_file,checkpoint_directory):
     testPixelMask(img, paths, viewer)
-
-    annotated_list.append(image_file)
-    updateLog(annotated_list, directory)
+    annotated_list = np.append(annotated_list, image_file)
+    updateLog(annotated_list, checkpoint_directory)
     input("Input ENTER after checking RB pixels")
 
 
@@ -114,9 +124,9 @@ def updateArraysAndSave(data,image_data,labels,image_labels,directory):
     data = np.vstack((data,image_data))
     labels = np.hstack((labels, image_labels))
 
-    with open(os.path.join(directory, "data", "data.npy"),"wb") as f:
+    with open(os.path.join(directory, "data.npy"),"wb") as f:
         np.save(f, data)
-    with open(os.path.join(directory, "data", "label.npy"), "wb") as f:
+    with open(os.path.join(directory, "labels.npy"), "wb") as f:
         np.save(f, labels)
 
 def test():
@@ -126,7 +136,7 @@ def test():
             img = src.read()
     except:
         raise ValueError("YOU MUST INPUT PATH TO .TIF IMAGE")
-    test_viewer = runNapari(img)
+    test_viewer, = runNapari(img, img)
     # napari_process = mlt.Process(target=napari.run())
     # napari_process.run()xs
 
@@ -144,30 +154,37 @@ def test():
 
 def main():
     directory = input("Enter Directory:\n")
+    image_directory = os.path.join(directory,"ndsi_imgs")
+    full_data_directory = os.path.join(directory, "full_img")
+    checkpointdirectory = os.path.join(directory, "checkpoints")
     # directory = r"C:\Users\marke\Documents\DSC180A-Q1\ee_data"
-    annotated_list, data, labels = loadCheckpoint(directory)
+    num_bands = rasterio.open(os.path.join(full_data_directory,list(os.walk(full_data_directory))[0][-1][-1])).read().shape[0]
 
-    for root, dirs, files in os.walk(directory):            
+
+    annotated_list, data, labels = loadCheckpoint(directory,num_bands)
+
+    for root, dirs, files in os.walk(image_directory):            
         for image_file in files:
-            image_path = os.path.join(directory, image_file)
+            image_path = os.path.join(image_directory, image_file)
+            full_image_path = os.path.join(full_data_directory, image_file)
             print(image_path)
             if os.path.splitext(image_path)[1] == ".tif" and image_file not in annotated_list:
-                viewer,img = runNapari(image_path)
+                viewer,img, img_full = runNapari(image_path,full_image_path)
                 while True:
                     response = input("Press Enter after Labeling or input \"SKIP\" in order to skip image:\n")
                     if response == "SKIP":
                         viewer.close()
-                        annotated_list.append(image_file)
-                        updateLog(annotated_list, directory)
+                        annotated_list = np.append(annotated_list, image_path)
+                        updateLog(annotated_list, checkpointdirectory)
                         break
                     try:    
                         paths = getPolygonMasks(viewer)
-                        ice,not_ice = getPixelMask(img,paths)
+                        ice,not_ice = getPixelMask(img_full,paths)
                         image_data,image_labels = getTrainingData(ice,not_ice)
                         
-                        updateArraysAndSave(data,image_data,labels,image_labels,directory)
-                        runTestsAndLog(img, paths, viewer, annotated_list,image_file,directory)
-                        
+                        runTestsAndLog(img, paths, viewer, annotated_list,image_file,checkpointdirectory)
+                        updateArraysAndSave(data,image_data,labels,image_labels,checkpointdirectory)
+
                         viewer.close()
                         break
                     except Exception as e:

@@ -1,11 +1,13 @@
 import ee 
 import geemap
-from datetime import datetime
+import os
+
 import numpy as np
 import rasterio #for reading images
 import matplotlib.pyplot as plt 
 import pandas as pd
-import os
+
+from datetime import datetime, date
 
 def cloudscore(image):
     '''
@@ -100,7 +102,6 @@ bad_dates = ['1999-12-16',
  '2020-11-07',
  '2021-01-10',
  '2021-10-09']
-from datetime import date
 
 #alternate form to filter dates, may not work based on comp
 
@@ -147,6 +148,6 @@ for i, date in enumerate(dates[:111]):
 
     new_image = image.select(bands)
 
-    geemap.ee_export_image(new_image, filename = "Downloads/Engilchek_glacier_{}.tif".format(date), scale = 100, region = region, file_per_band = False)
+    geemap.ee_export_image(new_image, filename = "./Engilchek_glacier_{}.tif".format(date), scale = 100, region = region, file_per_band = False)
     #get dates here to filter
     s_imgs.append(new_image)
