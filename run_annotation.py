@@ -76,8 +76,8 @@ def testPixelMask(img,paths,viewer):
     ice_coordinates = list(zip(iceMask[0],iceMask[1]))
     non_ice_coordinates = list(zip(nonIceMask[0],nonIceMask[1]))    
 
-    viewer.add_points(ice_coordinates,face_color="red",edge_color ="red",size=1)
-    viewer.add_points(non_ice_coordinates,face_color="blue",edge_color ="blue",size=1)
+    viewer.add_points(ice_coordinates,face_color="red",edge_color ="red",size=1, name="Ice")
+    viewer.add_points(non_ice_coordinates,face_color="blue",edge_color ="blue",size=1, name="Not Ice")
     
     return ice_coordinates,non_ice_coordinates
 
@@ -101,8 +101,8 @@ def loadCheckpoint(directory,num_bands):
     if os.path.exists(os.path.join(directory, "checkpoints","data.npy")) and os.path.exists(os.path.join(directory, "checkpoints","labels.npy")):
         with open(os.path.join(directory, "checkpoints", "data.npy"),'rb') as f:
             data= np.load(f)
-            with open(os.path.join(directory, "checkpoints", "labels.npy"),'rb') as f:
-                labels=np.load(f)
+        with open(os.path.join(directory, "checkpoints", "labels.npy"),'rb') as f:
+            labels=np.load(f)
 
     return imageList, data, labels
 
