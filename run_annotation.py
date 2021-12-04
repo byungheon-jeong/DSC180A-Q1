@@ -16,7 +16,7 @@ def runNapari(img_path, full_img_path):
         img = src.read()
     
     with rasterio.open(full_img_path) as src:
-        img_full = src.read()
+        img_full = src.read()  
 
     viewer = napari.view_image(img)
     return viewer, img, img_full

@@ -1,0 +1,21 @@
+image_collection: 'LANDSAT/LE07/C01/T1_TOA'
+dates:
+    start:
+    - 1999
+    - 10
+    - 3
+    end: 
+    - 1999
+    - 10
+    - 19
+regional_boundaries: 
+
+- !!python/tuple [79.8096398872554,42.295437794411406]
+- !!python/tuple [79.8096398872554,42.169352359125746]
+- !!python/tuple [80.24634643022415,42.169352359125746]
+- !!python/tuple [80.24634643022415,42.295437794411406]
+
+
+bands: ['B1','B2','B3', 'B4', 'B5', 'B6_VCID_1', 'B6_VCID_2', 'B7', 'B8']
+
+download_path: !!python/str "C:\\Users\\marke\\Documents\\DSC180A-Q1\\testing_data"

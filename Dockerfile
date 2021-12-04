@@ -1,18 +1,12 @@
-FROM huanjason/scikit-learn:latest
+FROM madmanfred/qt5-builder
 
 USER root
-ARG DEBIAN_FRONTEND=noninteractive
-RUN mkdir -p /projectHome
-RUN useradd -m bam -s /projectHome
-RUN chown bam /projectHome
 
-RUN apt-get update --fix-missing &&\
-        apt-get -y install \
+RUN apt-get update --fix-missing
+RUN apt-get -y install \
         git \
-        nano
+        python3-pip \
+        numpy
 
-RUN git clone https://github.com/byungheon-jeong/DSC180A-Q1.git /home/projectHome/
-
-
-USER bam
-WORKDIR /home/projectHome/
+RUN pip3 install "napari[all]"\
+        scikit-learn

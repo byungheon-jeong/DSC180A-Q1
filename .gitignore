@@ -1,3 +1,6 @@
 ee_data/*
 *.tif
 raw_data/*
+vscode*
+.vscode/*
+*cache*
