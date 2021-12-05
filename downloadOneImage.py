@@ -1,6 +1,6 @@
 import ee 
 import geemap
-import os
+import os,shutil
 import yaml
 import numpy as np
 import rasterio #for reading images
@@ -29,30 +29,57 @@ from datetime import datetime, date
 #     return image
 
 class imageCollection:
-    def __init__(self, image_collection:str, dates: list, regional_boundaries:list, bands:list, **kwargs) -> ee.ImageCollection:
-        """
-            BALLS DUDE
-        """        
+    def __init__(self, image_collection:str, dates: list, regional_boundaries:list, bands:list, **kwargs):
+
+        rrf = regional_boundaries
+        bbox = [(79.8096398872554,42.295437794411406),
+        (79.8096398872554,42.169352359125746),
+        (80.24634643022415,42.169352359125746),
+        (80.24634643022415,42.295437794411406)]
+
         start_date = datetime(*dates["start"])
         end_date = datetime(*dates["end"])
         region = ee.Geometry.Polygon(regional_boundaries)
 
         try:
-            collection = ee.ImageCollection(image_collection).filterDate(start_date,end_date).filterBounds(region).select(bands)
-            self.collection = collection
+            collection_hold = ee.ImageCollection(image_collection).filterDate(start_date,end_date).filterBounds(region)
+            collection_hold = collection_hold.select(bands)
+            self.collectionz = collection_hold
             self.bands = bands
+            self.region = region
+            self.blackout = [blackout_date for blackout_date in kwargs["blackoutDates"]] 
         except TypeError as e:
             raise(e)
+        
 
     def download(self, picture_path):
-        collection_length = self.collection.size()
-        collection_list = self.collection.toList(collection_length)
 
-        for index, date in enumerate(geemap.image_dates(self.collection, date_format="YYY-MM-dd").getInfo()):
+        collection_length = self.collectionz.size()
+        collection_list = self.collectionz.toList(collection_length)
+
+        if os.path.lexists(picture_path):
+            shutil.rmtree(picture_path)
+        
+        os.mkdir(picture_path)
+        os.mkdir(os.path.join(picture_path,"full"))
+        os.mkdir(os.path.join(picture_path,"ndsi"))
+        os.mkdir(os.path.join(picture_path,"rgb"))
+
+        dates = geemap.image_dates(self.collectionz, date_format="YYYY-MM-dd").getInfo()
+        dates = [date for date in dates if date not in self.blackout]
+        region = self.region
+
+
+        for index, date in enumerate(dates):
             image = ee.Image(collection_list.get(index)).select(self.bands)
             NDSI_image = (image.select('B2').subtract(image.select('B5')).divide(image.select('B5').add(image.select('B5'))))
-            geemap.ee_export_image(image, filename = f"{picture_path}/full/Engilchek_glacier_{date}.tif", scale = 300, file_per_band = False)
-            geemap.ee_export_image(NDSI_image, filename = f"{picture_path}/ndsi/Engilchek_glacier_{date}.tif", scale = 100, file_per_band = False)
+            rgb = image.select(["B1","B2","B3"])
+        
+            # geemap.ee_export_image(image, filename = f"{picture_path}/full/Engilchek_glacier_{date}.tif", scale = 280, file_per_band = False)
+            # geemap.ee_export_image(rgb, filename = f"{picture_path}/ndsi/Engilchek_glacier_{date}.tif", scale = 100, file_per_band = False)
+            geemap.ee_export_image(rgb, filename = f"{picture_path}/rgb/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
+            geemap.ee_export_image(image, filename = f"{picture_path}/full/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
+            geemap.ee_export_image(NDSI_image, filename = f"{picture_path}/ndsi/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
 
 if __name__ == "__main__":
     parser = ArgumentParser()

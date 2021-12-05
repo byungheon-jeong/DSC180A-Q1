@@ -9,6 +9,13 @@
             "args": ["--config", "C:\\Users\\marke\\Documents\\DSC180A-Q1\\config\\download.yml"]
         },
         {
+            "name": "Run Original",
+            "type": "python",
+            "request": "launch",
+            "module": "downloadScript"
+
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
