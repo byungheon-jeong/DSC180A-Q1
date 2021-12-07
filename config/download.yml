@@ -1,0 +1,29 @@
+image_collection: 'LANDSAT/LE07/C01/T1_TOA'
+dates:
+    start:
+    - 1999
+    - 1
+    - 3
+    end: 
+    - 1999
+    - 10
+    - 19
+regional_boundaries: 
+- !!python/tuple [79.79277544262159,42.153122493855435]
+- !!python/tuple [80.29677324535596,42.153122493855435]
+- !!python/tuple [80.29677324535596,42.30717586572165]
+- !!python/tuple [79.79277544262159,42.30717586572165]
+
+blackout_dates:
+- !!python/str 1999-06-30
+- !!python/str 1999-07-16
+- !!python/str 1999-07-25
+- !!python/str 1999-08-17
+- !!python/str 1999-09-18
+
+glacier_name: "Engilchek_glacier"
+
+bands: ['B1','B2','B3', 'B4', 'B5', 'B6_VCID_1', 'B6_VCID_2', 'B7', 'B8']
+
+download_path: !!python/str "C:\\Users\\marke\\Documents\\DSC180A-Q1\\testing_data"
+

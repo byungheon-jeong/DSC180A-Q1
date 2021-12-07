@@ -1,0 +1,29 @@
+image_collection: 'LANDSAT/LE07/C01/T1_TOA'
+dates:
+    start:
+    - 1999
+    - 10
+    - 3
+    end: 
+    - 1999
+    - 12
+    - 19
+regional_boundaries: 
+- !!python/tuple [-73.34701948768978,-50.579705948106266]
+- !!python/tuple [-72.91511946327572,-50.579705948106266]
+- !!python/tuple [-72.91511946327572,-50.401034872048925]
+- !!python/tuple [-73.34701948768978,-50.401034872048925]
+
+blackout_dates:
+- !!python/str 1999-06-30
+- !!python/str 1999-07-16
+- !!python/str 1999-07-25
+- !!python/str 1999-08-17
+- !!python/str 1999-09-18
+
+glacier_name: "Perito_Moreno_glacier"
+
+bands: ['B1','B2','B3', 'B4', 'B5', 'B6_VCID_1', 'B6_VCID_2', 'B7', 'B8']
+
+download_path: !!python/str "C:\\Users\\marke\\Documents\\DSC180A-Q1\\testing_data"
+
