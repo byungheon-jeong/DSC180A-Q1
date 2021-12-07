@@ -1,0 +1,11 @@
+training_data_path: !!python/str ./raw_data/checkpoints/data.npy
+
+testing_data_path: !!python/str ./raw_data/checkpoints/labels.npy
+
+model_output_path: !!python/str ./models
+
+pictures_to_be_labeled_path: !!python/str ./testing_data
+
+labeled_pictures_path: !!python/str ./labels
+
+do_labeling: !!python/bool False
