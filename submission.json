@@ -1,0 +1,4 @@
+{
+    "dockerhub-id": "b1jeong/q1train:latest",
+    "build-script": "python train.py --config config/linux_config.yml"
+}
