@@ -2,7 +2,7 @@ import yaml,pickle
 import sklearn as sk
 import numpy as np
 import pandas as pd
-import rasterio, os, napari
+import rasterio, os
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -73,7 +73,7 @@ def train(training_data_path:str, testing_data_path:str, labeled_pictures_path:s
     model_f1= np.array([])
     model_accuracy = np.array([])
 
-    for i in np.arange(1):
+    for i in np.arange(50):
         fclf = RandomForestClassifier(max_depth=20, n_estimators=100, max_features=1)
         fclf.fit(X_train, y_train) 
         accuracy_score = fclf.score(X_test, y_test)
@@ -102,6 +102,7 @@ def train(training_data_path:str, testing_data_path:str, labeled_pictures_path:s
     
 
     if do_labeling:
+        import napari
         files = os.listdir(os.path.join(pictures_to_be_labeled_path,"rgb"))
         for file in files:
             file_name = file.split(".")[0]
