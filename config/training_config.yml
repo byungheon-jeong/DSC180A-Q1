@@ -8,4 +8,4 @@ pictures_to_be_labeled_path: !!python/str .\testing_data
 
 labeled_pictures_path: !!python/str .\labels
 
-def loadAndTest(full_directory,rgb_directory, label_directory, trained_model):
+do_labeling: !!python/bool False
