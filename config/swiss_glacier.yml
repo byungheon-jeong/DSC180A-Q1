@@ -8,11 +8,12 @@ dates:
     - 1999
     - 10
     - 19
+
 regional_boundaries: 
-- !!python/tuple [79.79277544262159,42.153122493855435]
-- !!python/tuple [80.29677324535596,42.153122493855435]
-- !!python/tuple [80.29677324535596,42.30717586572165]
-- !!python/tuple [79.79277544262159,42.30717586572165]
+- !!python/tuple [7.9789890719359,46.39592766976875]
+- !!python/tuple [8.112198300451524,46.39592766976875]
+- !!python/tuple [8.112198300451524,46.52978045607592]
+- !!python/tuple [7.9789890719359,46.52978045607592]
 
 blackout_dates:
 - !!python/str 1999-06-30
@@ -21,7 +22,7 @@ blackout_dates:
 - !!python/str 1999-08-17
 - !!python/str 1999-09-18
 
-glacier_name: "Engilchek_glacier"
+glacier_name: "Aletsch_glacier"
 
 bands: ['B1','B2','B3', 'B4', 'B5', 'B6_VCID_1', 'B6_VCID_2', 'B7', 'B8']
 

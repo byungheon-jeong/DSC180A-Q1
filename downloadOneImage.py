@@ -10,24 +10,6 @@ from argparse import ArgumentParser
 
 from datetime import datetime, date
 
-# def ifFlag(cloud_flag):
-#     if cloud_flag:
-
-# def cloudscore(image,region):
-#     '''
-#     Inner function for computing cloud score such that we can remove 
-#     bad images from the landsat collections we download.
-#     Implementation in javascript can be found of Google Earth Engine 
-#     website under (landsat algorithms), translation to python by KH.
-#     Further help from Nicholas Clinton at 
-#     https://urldefense.com/v3/__https://gis.stackexchange.com/questions/252685/filter-landsat-images-base-on-cloud-cover-over-a-region-of-interest*5Cn__;JQ!!LLK065n_VXAQ!zP9K-68-_oPkaNWFZdbTYYnai85ggL4j3FhdqssLkim-RneBr2NqD6Ka4fu6yw-v$         '''
-#     cloud = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud')
-#     cloudiness = cloud.reduceRegion(ee.Reducer.mean(),
-#                                     geometry=region,
-#                                     scale=30)
-#     image = image.set(cloudiness)
-#     return image
-
 class imageCollection:
     def __init__(self, image_collection:str, dates: list, regional_boundaries:list, bands:list, **kwargs):
 
@@ -47,12 +29,32 @@ class imageCollection:
             self.collectionz = collection_hold
             self.bands = bands
             self.region = region
-            self.blackout = [blackout_date for blackout_date in kwargs["blackoutDates"]] 
+            self.blackout = [blackout_date for blackout_date in kwargs["blackout_dates"]] 
         except TypeError as e:
             raise(e)
         
 
-    def download(self, picture_path):
+    # def ifFlag(cloud_flag, func):
+    #     if cloud_flag:
+    #         return func
+
+    # @ifFlag()
+    # def cloudscore(image,region):
+    #     '''
+    #     Inner function for computing cloud score such that we can remove 
+    #     bad images from the landsat collections we download.
+    #     Implementation in javascript can be found of Google Earth Engine 
+    #     website under (landsat algorithms), translation to python by KH.
+    #     Further help from Nicholas Clinton at 
+    #     https://urldefense.com/v3/__https://gis.stackexchange.com/questions/252685/filter-landsat-images-base-on-cloud-cover-over-a-region-of-interest*5Cn__;JQ!!LLK065n_VXAQ!zP9K-68-_oPkaNWFZdbTYYnai85ggL4j3FhdqssLkim-RneBr2NqD6Ka4fu6yw-v$         '''
+    #     cloud = ee.Algorithms.Landsat.simpleCloudScore(image).select('cloud')
+    #     cloudiness = cloud.reduceRegion(ee.Reducer.mean(),
+    #                                     geometry=region,
+    #                                     scale=30)
+    #     image = image.set(cloudiness)
+    #     return image
+
+    def download(self, picture_path, glacier_name):
 
         collection_length = self.collectionz.size()
         collection_list = self.collectionz.toList(collection_length)
@@ -77,9 +79,9 @@ class imageCollection:
         
             # geemap.ee_export_image(image, filename = f"{picture_path}/full/Engilchek_glacier_{date}.tif", scale = 280, file_per_band = False)
             # geemap.ee_export_image(rgb, filename = f"{picture_path}/ndsi/Engilchek_glacier_{date}.tif", scale = 100, file_per_band = False)
-            geemap.ee_export_image(rgb, filename = f"{picture_path}/rgb/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
-            geemap.ee_export_image(image, filename = f"{picture_path}/full/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
-            geemap.ee_export_image(NDSI_image, filename = f"{picture_path}/ndsi/Engilchek_glacier_{date}.tif", scale = 100, region=region, file_per_band = False)
+            geemap.ee_export_image(rgb, filename = f"{picture_path}/rgb/{glacier_name}_{date}.tif", scale = 40, region=region, file_per_band = False)
+            geemap.ee_export_image(image, filename = f"{picture_path}/full/{glacier_name}_{date}.tif", scale = 40, region=region, file_per_band = False)
+            geemap.ee_export_image(NDSI_image, filename = f"{picture_path}/ndsi/{glacier_name}_{date}.tif", scale = 40, region=region, file_per_band = False)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -98,4 +100,4 @@ if __name__ == "__main__":
     ee.Initialize()
     
     test = imageCollection(**config)
-    test.download(r"C:\Users\marke\Documents\DSC180A-Q1\testing_data")
+    test.download(r".\testing_data", config["glacier_name"])
