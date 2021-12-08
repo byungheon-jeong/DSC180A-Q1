@@ -1,4 +1,5 @@
 {
+    "_comment":     # Due to the run_jupyter.sh (the file that is run by launch.sh when creating the pod), the conda envirnoment starts at (base) please switch to (capstone)
     "dockerhub-id": "b1jeong/q1train:latest",
     "build-script": "python train.py --config config/linux_config.yml"
 }
