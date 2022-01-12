@@ -1,6 +1,7 @@
 import os,time, pickle, re
+from unittest.case import TestCase
 import rasterio #for reading images
-import napari
+import napari, unittest
 
 import multiprocessing as mlt
 import numpy as np
@@ -8,6 +9,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from matplotlib import path
+from scipy.sparse import data
+from argparse import ArgumentParser
 
 directory = os.path.join(os.getcwd(), "ee_data")
 
@@ -35,7 +38,19 @@ def getPolygonMasks(viewer)-> list:
     path_results = {"ice":ice_coordinate_list, "non_ice":non_ice_coordinate_list}
     return path_results
 
-    
+
+def getPolygonMasks_new(viewer):
+    layers = [layer for layer in viewer.layers]
+    label_data = {}
+
+    for layer in layers[1:]:
+        name = layer.name
+        layer_type = re.search(r"([A-Za-z ]*)\s?[0-9]?", name).group(0).strip()
+
+        label_data.setdefault(layer_type, []).append(np.delete(layer.data[0],(0),axis=1))
+
+    return label_data
+
 def containsWithin(path_dimention, img):
     glacier = path.Path(path_dimention)
     indices = np.where(np.all(img == img, axis=0))
@@ -192,10 +207,8 @@ def main():
 
 
                 # return test_mask
-
-    
+        
 
 if __name__ == "__main__":
 
     main()
-    # test()

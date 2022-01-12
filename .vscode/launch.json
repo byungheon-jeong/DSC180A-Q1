@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+    
         {
             "name": "Download Module",
             "type": "python",
@@ -13,8 +14,24 @@
             "type": "python",
             "request": "launch",
             "module": "downloadScript"
-
         },
+
+        {
+            "name": "Run Train",
+            "type": "python",
+            "request": "launch",
+            "module": "train",
+            "args": ["--config", "C:\\Users\\marke\\Documents\\DSC180A-Q1\\config\\training_config.yml"]
+        },
+
+        {
+            "name": "Run Labeler",
+            "type": "python",
+            "request": "launch",
+            "module": "run_annotation",
+            "args": ["--config", "C:\\Users\\marke\\Documents\\DSC180A-Q1\\config\\argentina_glacier.yml"]
+        },
+        
         {
             "name": "Python: Current File",
             "type": "python",

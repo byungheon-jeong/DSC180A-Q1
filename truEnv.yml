@@ -1,0 +1,11 @@
+name: capstone
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pyyaml
+  - scikit-learn
+  - numpy
+  - pandas
+  - rasterio
+prefix: C:\Users\marke\miniconda3\envs\capstone

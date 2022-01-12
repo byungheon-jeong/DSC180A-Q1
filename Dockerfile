@@ -1,14 +1,14 @@
-FROM ucsdets/datahub-base-notebook:2021.2-stable
+FROM ucsdets/datahub-base-notebook:2021.1-stable
 
 USER root
 ARG DEBIAN_FRONTEND=noninteractive
 RUN mkdir -p /projectHome
-RUN useradd -m bam -s /projectHome
-RUN chown bam /projectHome
+RUN useradd -m bam -s /projectHome -s /bin/bash 
+RUN chown bam -R /projectHome /home/jovyan/ /bin/bash 
 
 RUN apt-get update --fix-missing &&\
         apt-get -y install \
-        # git \
+        git \
         nano \
         python3-pip
 
@@ -19,11 +19,12 @@ COPY ./truEnv.yml /projectHome/requirements.yml
 RUN conda env create -f /projectHome/requirements.yml
 # RUN git clone https://github.com/byungheon-jeong/dsc180a-assign5.git /home/projectHome/
 
-RUN echo "source activate capstone" > ~/.bashrc
-# RUN pip install "napari[all]"
+RUN pip install "napari[all]"
 
+USER bam
 WORKDIR /home/projectHome/
 
-CMD ["/bin/bash"]
+RUN echo "source activate capstone" > ~/.bashrc
+ENV PATH /opt/conda/envs/capstone/bin:$PATH
 
 
