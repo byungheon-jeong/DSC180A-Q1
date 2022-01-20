@@ -24,29 +24,13 @@ def runNapari(img_path, full_img_path):
     viewer = napari.view_image(img)
     return viewer, img, img_full
 
-
-def getPolygonMasks(viewer)-> list:
-    ice_layers = {str.lower(layer.name):layer.data for layer in viewer.layers if re.match("^ice.*", str.lower(layer.name))}
-    non_ice_layers= {str.lower(layer.name):layer.data for layer in viewer.layers if re.match("^not.*ice.*", str.lower(layer.name))}
-    ice_coordinate_list, non_ice_coordinate_list = list(),list()
-
-    for i, (x,y) in enumerate(ice_layers.items()):
-        ice_coordinate_list.append(np.delete(y[0],(0),axis=1))
-    for i, (x,y) in enumerate(non_ice_layers.items()):
-        non_ice_coordinate_list.append(np.delete(y[0],(0),axis=1))
-
-    path_results = {"ice":ice_coordinate_list, "non_ice":non_ice_coordinate_list}
-    return path_results
-
-
-def getPolygonMasks_new(viewer):
+def getPolygonMasks(viewer):
     layers = [layer for layer in viewer.layers]
     label_data = {}
 
     for layer in layers[1:]:
         name = layer.name
         layer_type = re.search(r"([A-Za-z ]*)\s?[0-9]?", name).group(0).strip()
-
         label_data.setdefault(layer_type, []).append(np.delete(layer.data[0],(0),axis=1))
 
     return label_data
@@ -59,42 +43,47 @@ def containsWithin(path_dimention, img):
     return glacier.contains_points(pixels).reshape(img.shape[1:])
 
 
-def getPixelMask(img,paths):
-    iceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["ice"]]))
-    nonIceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["non_ice"]]))
+def getPixelMask(img, paths):
 
-    ice_coordinates = list(zip(iceMask[0],iceMask[1]))
-    non_ice_coordinates = list(zip(nonIceMask[0],nonIceMask[1]))    
-    iceData,nonIceData=list(),list()
-    for (x,y) in ice_coordinates:
-        iceData.append(np.rollaxis(img,0,3)[x,y,:])
-    for (x,y) in non_ice_coordinates:
-        nonIceData.append(np.rollaxis(img,0,3)[x,y,:])
-    return np.array(iceData), np.array(nonIceData)
+    all_masks = {}
+    mask_labels = paths.keys()
+    img_dimentions = np.rollaxis(img,0,3)[0,0,:].shape
 
+    for label in mask_labels:
+        partial_coordinates = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths[label]]))
+        coordinates = list(zip(partial_coordinates[0], partial_coordinates[1]))
+        # mask = np.array([], ndmin=img.shape[0])
+        # mask = np.empty(shape=np.rollaxis(img,0,3)[0,0,:].shape)
+        mask = []
+        for (x,y) in coordinates:
+            img_coordinate_values = np.rollaxis(img,0,3)[x,y,:]
+            mask.append(img_coordinate_values)
+            # mask = np.append(mask,np.rollaxis(img,0,3)[x,y,:])
 
-def getTrainingData(iceData, nonIceData):
-    data,labels = np.array([]), np.array([])
+        all_masks[label] = np.array(mask)
 
-    iceLabels = np.array(["Ice"]*iceData.shape[0])
-    nonIceLabels = np.array(["Not Ice"]*nonIceData.shape[0])
-    data = np.vstack((iceData, nonIceData))
-    labels = np.hstack((iceLabels, nonIceLabels))
-
-    return data, labels
+    return all_masks, img_dimentions
 
 
-def testPixelMask(img,paths,viewer):
-    iceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["ice"]]))
-    nonIceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["non_ice"]]))
+def getTrainingData(masks,img_dimentions):
+    data = np.empty(shape=img_dimentions)
+    labels = np.array([])
+    for key, mask in masks.items():
+        label = np.array([key]*mask.shape[0])
+        np.append(labels,label)
+        data = np.vstack((data,mask))
+        # np.vstack((labels, label))
+        # np.hstack((data, mask))
+    print(label.shape, data.shape)
+    return data[1:], labels
+    # data,labels = np.array([]), np.array([])
 
-    ice_coordinates = list(zip(iceMask[0],iceMask[1]))
-    non_ice_coordinates = list(zip(nonIceMask[0],nonIceMask[1]))    
+    # iceLabels = np.array(["Ice"]*iceData.shape[0])
+    # nonIceLabels = np.array(["Not Ice"]*nonIceData.shape[0])
+    # data = np.vstack((iceData, nonIceData))
+    # labels = np.hstack((iceLabels, nonIceLabels))
 
-    viewer.add_points(ice_coordinates,face_color="red",edge_color ="red",size=1, name="Ice")
-    viewer.add_points(non_ice_coordinates,face_color="blue",edge_color ="blue",size=1, name="Not Ice")
-    
-    return ice_coordinates,non_ice_coordinates
+    # return data, labels
 
 
 def loadCheckpoint(directory,num_bands):
@@ -144,6 +133,7 @@ def updateArraysAndSave(data,image_data,labels,image_labels,directory):
     with open(os.path.join(directory, "labels.npy"), "wb") as f:
         np.save(f, labels)
 
+
 def test():
     try:
         test_image_path = input("Input the image to test:\n")
@@ -178,7 +168,7 @@ def main():
 
     annotated_list, data, labels = loadCheckpoint(directory,num_bands)
 
-    for root, dirs, files in os.walk(image_directory):            
+    for root, dirs, files in os.walk(image_directory):
         for image_file in files:
             image_path = os.path.join(image_directory, image_file)
             full_image_path = os.path.join(full_data_directory, image_file)
@@ -194,6 +184,7 @@ def main():
                         break
                     try:    
                         paths = getPolygonMasks(viewer)
+                        # To be changed
                         ice,not_ice = getPixelMask(img_full,paths)
                         image_data,image_labels = getTrainingData(ice,not_ice)
                         
