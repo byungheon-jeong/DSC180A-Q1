@@ -1,4 +1,5 @@
 import os,time, pickle, re
+from tkinter.messagebox import NO
 from unittest.case import TestCase
 import rasterio #for reading images
 import napari, unittest
@@ -46,12 +47,14 @@ def containsWithin(path_dimention, img):
 def getPixelMask(img, paths):
 
     all_masks = {}
+    all_coordinates = {}
     mask_labels = paths.keys()
     img_dimentions = np.rollaxis(img,0,3)[0,0,:].shape
 
     for label in mask_labels:
         partial_coordinates = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths[label]]))
         coordinates = list(zip(partial_coordinates[0], partial_coordinates[1]))
+        all_coordinates[label] = coordinates
         # mask = np.array([], ndmin=img.shape[0])
         # mask = np.empty(shape=np.rollaxis(img,0,3)[0,0,:].shape)
         mask = []
@@ -61,8 +64,9 @@ def getPixelMask(img, paths):
             # mask = np.append(mask,np.rollaxis(img,0,3)[x,y,:])
 
         all_masks[label] = np.array(mask)
+        all_coordinates[label] = np.array(coordinates)
 
-    return all_masks, img_dimentions
+    return all_masks, all_coordinates, img_dimentions
 
 
 def getTrainingData(masks,img_dimentions):
@@ -70,11 +74,11 @@ def getTrainingData(masks,img_dimentions):
     labels = np.array([])
     for key, mask in masks.items():
         label = np.array([key]*mask.shape[0])
-        np.append(labels,label)
+        labels = np.append(labels,label)
         data = np.vstack((data,mask))
         # np.vstack((labels, label))
         # np.hstack((data, mask))
-    print(label.shape, data.shape)
+
     return data[1:], labels
     # data,labels = np.array([]), np.array([])
 
@@ -117,13 +121,6 @@ def updateLog(imageList,directory):
         np.save(f, imageList)
 
 
-def runTestsAndLog(img, paths, viewer, annotated_list,image_file,checkpoint_directory):
-    testPixelMask(img, paths, viewer)
-    annotated_list = np.append(annotated_list, image_file)
-    updateLog(annotated_list, checkpoint_directory)
-    input("Input ENTER after checking RB pixels")
-
-
 def updateArraysAndSave(data,image_data,labels,image_labels,directory):
     data = np.vstack((data,image_data))
     labels = np.hstack((labels, image_labels))
@@ -134,32 +131,55 @@ def updateArraysAndSave(data,image_data,labels,image_labels,directory):
         np.save(f, labels)
 
 
-def test():
-    try:
-        test_image_path = input("Input the image to test:\n")
-        with rasterio.open(test_image_path) as src:
-            img = src.read()
-    except:
-        raise ValueError("YOU MUST INPUT PATH TO .TIF IMAGE")
-    test_viewer, = runNapari(img, img)
-    # napari_process = mlt.Process(target=napari.run())
-    # napari_process.run()xs
+def runTestsAndLog(img, coordiantes, paths, viewer, annotated_list,image_file,checkpoint_directory):
+    testPixelMask(img, coordiantes, paths, viewer)
+    annotated_list = np.append(annotated_list, image_file)
+    updateLog(annotated_list, checkpoint_directory)
+    input("Input ENTER after checking RB pixels")
 
-    while True:
-        input("Press Enter after Labeling")
-        try:    
-            paths = getPolygonMasks(test_viewer)
-            test_mask = getPixelMask(img,paths)
-            testPixelMask(img, paths, test_viewer)
-            break
-        except:
-            print("Label the image")
-    return test_mask
+
+def testPixelMask(img,coordiantes,paths,viewer):
+    # iceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["ice"]]))
+    # nonIceMask = np.where(np.logical_or.reduce([containsWithin(path,img) for path in paths["non_ice"]]))
+    
+    for label, coordinate in coordiantes.items():
+        colors = np.random.randint(0,255,size=(3,))
+        viewer.add_points(coordinate,face_color=colors,edge_color =colors,size=10, name=f"{label}_points")
+
+    # ice_coordinates = list(zip(iceMask[0],iceMask[1]))
+    # non_ice_coordinates = list(zip(nonIceMask[0],nonIceMask[1]))
+
+    # viewer.add_points(ice_coordinates,face_color="red",edge_color ="red",size=1, name="Ice")
+    # viewer.add_points(non_ice_coordinates,face_color="blue",edge_color ="blue",size=1, name="Not Ice")
+
+    return None
+
+# def test():
+#     try:
+#         test_image_path = input("Input the image to test:\n")
+#         with rasterio.open(test_image_path) as src:
+#             img = src.read()
+#     except:
+#         raise ValueError("YOU MUST INPUT PATH TO .TIF IMAGE")
+#     test_viewer, = runNapari(img, img)
+#     # napari_process = mlt.Process(target=napari.run())
+#     # napari_process.run()xs
+
+#     while True:
+#         input("Press Enter after Labeling")
+#         try:    
+#             paths = getPolygonMasks(test_viewer)
+#             test_mask = getPixelMask(img,paths)
+#             testPixelMask(img, paths, test_viewer)
+#             break
+#         except:
+#             print("Label the image")
+#     return test_mask
 
 
 def main():
     directory = input("Enter Directory:\n")
-    image_directory = os.path.join(directory,"ndsi_imgs")
+    image_directory = os.path.join(directory,"ndsi_img")
     full_data_directory = os.path.join(directory, "full_img")
     checkpointdirectory = os.path.join(directory, "checkpoints")
     # directory = r"C:\Users\marke\Documents\DSC180A-Q1\ee_data"
@@ -185,17 +205,15 @@ def main():
                     try:    
                         paths = getPolygonMasks(viewer)
                         # To be changed
-                        ice,not_ice = getPixelMask(img_full,paths)
-                        image_data,image_labels = getTrainingData(ice,not_ice)
-                        
-                        runTestsAndLog(img, paths, viewer, annotated_list,image_file,checkpointdirectory)
+                        masks, coordinates, img_dimentions = getPixelMask(img_full,paths)
+                        image_data,image_labels = getTrainingData(masks,img_dimentions)
+                        runTestsAndLog(img, coordinates, paths, viewer, annotated_list,image_file,checkpointdirectory)
                         updateArraysAndSave(data,image_data,labels,image_labels,checkpointdirectory)
 
                         viewer.close()
                         break
                     except Exception as e:
                         print(f"{e} \nLabel the image")
-
 
                 # return test_mask
         

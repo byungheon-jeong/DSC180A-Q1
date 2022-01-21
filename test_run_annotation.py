@@ -80,7 +80,6 @@ class Test_MultiLayers(unittest.TestCase):
         masks = getPixelMask(self.img_full,paths)
 
 
-
 if __name__ == "__main__":
     unittest.main()
 
